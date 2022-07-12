@@ -1,4 +1,4 @@
-module github.com/opensourceways/robot-github-review
+module github.com/opensourceways/robot-github-openeuler-review
 
 go 1.16
 
