@@ -300,8 +300,10 @@ github.com/onsi/gomega v1.7.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1Cpa
 github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
 github.com/onsi/gomega v1.10.1/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1ybHNo=
 github.com/opensourceways/community-robot-lib v0.0.0-20220106023803-5440edf1bb49/go.mod h1:7Ed0TgvJBN6UaXnHwHRqZGCfg6SYpqe5mi6esCKaD1g=
+github.com/opensourceways/community-robot-lib v0.0.0-20220714092941-48ee37a417d1 h1:i9+qbrqUdn5VN+9BZ3isJeOw3KUwohIZI0yQvUx56zk=
+github.com/opensourceways/community-robot-lib v0.0.0-20220714092941-48ee37a417d1/go.mod h1:aeTHmjsRPhPpRuUDT95A5YFEFhGzc2OM7OL9HHjsmYM=
 github.com/opensourceways/go-gitee v0.0.0-20211230094517-effa55336a8b/go.mod h1:yvVsEMhp7frMblzN1sco4C7cRlnlpqkkn3O2JQNdRu0=
-github.com/opensourceways/go-gitee v0.0.0-20220331060602-b86c6d95a2a8/go.mod h1:yvVsEMhp7frMblzN1sco4C7cRlnlpqkkn3O2JQNdRu0=
+github.com/opensourceways/go-gitee v0.0.0-20220714075315-cb246f1dfb96/go.mod h1:yvVsEMhp7frMblzN1sco4C7cRlnlpqkkn3O2JQNdRu0=
 github.com/opensourceways/repo-file-cache v0.0.0-20220111033841-e731b3bb770a h1:KP4RWVvx3KmiM1CjQLFnhmfGXkXBUh8j9k4QyZQtCFg=
 github.com/opensourceways/repo-file-cache v0.0.0-20220111033841-e731b3bb770a/go.mod h1:A2BoPC0Jquv5d3noGmahyYICVRWqTEkIpg5IABUthxU=
 github.com/opentracing/opentracing-go v1.2.0/go.mod h1:GxEUsuufX4nBwe+T+Wl9TAgYrxe9dPLANfrWvHYVTgc=
