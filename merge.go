@@ -5,6 +5,7 @@ import (
 	"fmt"
 	gc "github.com/opensourceways/community-robot-lib/githubclient"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,18 +40,20 @@ func (bot *robot) handleCheckPR(e *sdk.IssueCommentEvent, cfg *botConfig, log *l
 func (bot *robot) tryMerge(e *sdk.IssueCommentEvent, cfg *botConfig, addComment bool, log *logrus.Entry) error {
 	org, repo := gc.GetOrgRepo(e.GetRepo())
 	number := e.GetIssue().GetNumber()
-	e.GetIssue()
 
 	sp, err := bot.cli.GetSinglePR(org, repo, number)
 	if err != nil {
 		return err
 	}
 
+	methodOfMerge := bot.genMergeMethod(sp, org, repo, log)
+
 	h := mergeHelper{
 		pr:      sp,
 		cfg:     cfg,
 		org:     org,
 		repo:    repo,
+		method:  methodOfMerge,
 		cli:     bot.cli,
 		trigger: e.GetComment().GetUser().GetLogin(),
 	}
@@ -98,6 +101,7 @@ type mergeHelper struct {
 
 	org     string
 	repo    string
+	method  string
 	trigger string
 
 	cli iClient
@@ -108,18 +112,41 @@ func (m *mergeHelper) merge() error {
 
 	desc := m.genMergeDesc()
 
+	bodyStr := ""
 	if m.org == "openeuler" && m.repo == "kernel" {
+		author := m.pr.GetUser().GetLogin()
+		if author == "openeuler-sync-bot" {
+			bodySlice := strings.Split(*m.pr.Body, "\n")
+			originPR := strings.Split(strings.Replace(bodySlice[1], "### ", "", -1), "1. ")[1]
+			syncRelatedPR := bodySlice[2]
+
+			relatedPRNumber, _ := strconv.Atoi(strings.Replace(
+				strings.Split(syncRelatedPR, "/")[6], "\r", "", -1))
+			relatedOrg := strings.Split(syncRelatedPR, "/")[3]
+			relatedRepo := strings.Split(syncRelatedPR, "/")[4]
+			relatedPR, _ := m.cli.GetPullRequests(gc.PRInfo{Org: relatedOrg, Repo: relatedRepo, Number: relatedPRNumber})
+			relatedDesc := relatedPR[0].Body
+
+			bodyStr = fmt.Sprintf("\n%s \n%s \n \n%s", originPR, syncRelatedPR, relatedDesc)
+		} else {
+			bodyStr = *m.pr.Body
+		}
 		return m.cli.MergePR(
 			gc.PRInfo{Org: m.org, Repo: m.repo, Number: number},
-			fmt.Sprintf("\n%s \n%s", *m.pr.Body, desc),
-			&sdk.PullRequestOptions{MergeMethod: string(m.cfg.MergeMethod)},
+			fmt.Sprintf("\n%s \n \n%s \n \n%s \n%s", fmt.Sprintf("Merge Pull Request from: @%s",
+				m.pr.User.GetLogin()), bodyStr, fmt.Sprintf("Link:%s", m.pr.GetHTMLURL()), desc),
+			&sdk.PullRequestOptions{
+				MergeMethod: string(m.cfg.MergeMethod),
+			},
 		)
 	}
 
 	return m.cli.MergePR(
 		gc.PRInfo{Org: m.org, Repo: m.repo, Number: number},
 		fmt.Sprintf("\n%s", desc),
-		&sdk.PullRequestOptions{MergeMethod: string(m.cfg.MergeMethod)},
+		&sdk.PullRequestOptions{
+			MergeMethod: m.method,
+		},
 	)
 }
 
@@ -238,10 +265,31 @@ func (m *mergeHelper) genMergeDesc() string {
 			comment.GetUser().GetLogin() != m.pr.GetUser().GetLogin()
 	}
 
+	f2 := func(comment *sdk.IssueComment, reg *regexp.Regexp) bool {
+		return reg.MatchString(*comment.Body) &&
+			comment.GetUser().GetLogin() != m.pr.GetUser().GetLogin()
+	}
+
 	reviewers := sets.NewString()
 	signers := sets.NewString()
+	ackers := sets.NewString()
 
+	org, repo := m.org, m.repo
 	for _, c := range comments {
+		if org == "openeuler" && repo == "kernel" {
+			if f2(c, regAddLgtm) {
+				reviewers.Insert(c.GetUser().GetLogin())
+			}
+
+			if f2(c, regAddApprove) {
+				signers.Insert(c.GetUser().GetLogin())
+			}
+
+			if f2(c, regAck) {
+				ackers.Insert(c.GetUser().GetLogin())
+			}
+		}
+
 		if f(c, regAddLgtm) {
 			reviewers.Insert(c.GetUser().GetLogin())
 		}
@@ -251,12 +299,11 @@ func (m *mergeHelper) genMergeDesc() string {
 		}
 	}
 
-	if len(signers) == 0 && len(reviewers) == 0 {
+	if len(signers) == 0 && len(reviewers) == 0 && len(ackers) == 0 {
 		return ""
 	}
 
 	// kernel return the name and email address
-	org, repo := m.org, m.repo
 	if org == "openeuler" && repo == "kernel" {
 		content, err := m.cli.GetPathContent("openeuler", "community", "sig/Kernel/sig-info.yaml", "master")
 		if err != nil {
@@ -299,6 +346,13 @@ func (m *mergeHelper) genMergeDesc() string {
 			}
 		}
 
+		ackersInfo := sets.NewString()
+		for a, _ := range ackers {
+			if v, ok := nameEmail[a]; ok {
+				ackersInfo.Insert(v)
+			}
+		}
+
 		reviewedUserInfo := make([]string, 0)
 		for _, item := range reviewersInfo.UnsortedList() {
 			reviewedUserInfo = append(reviewedUserInfo, fmt.Sprintf("Reviewed-by: %s \n", item))
@@ -309,17 +363,22 @@ func (m *mergeHelper) genMergeDesc() string {
 			signedOffUserInfo = append(signedOffUserInfo, fmt.Sprintf("Signed-off-by: %s \n", item))
 		}
 
+		ackeByUserInfo := make([]string, 0)
+		for _, item := range ackersInfo.UnsortedList() {
+			ackeByUserInfo = append(ackeByUserInfo, fmt.Sprintf("Acked-by: %s \n", item))
+		}
+
 		return fmt.Sprintf(
-			"\nFrom: @%s \n%s%s",
-			*m.pr.User.Login,
+			"\n%s%s%s",
 			strings.Join(reviewedUserInfo, ""),
 			strings.Join(signedOffUserInfo, ""),
+			strings.Join(ackeByUserInfo, ""),
 		)
 	}
 
 	return fmt.Sprintf(
 		"From: @%s \nReviewed-by: @%s \nSigned-off-by: @%s \n",
-		*m.pr.User.Login,
+		m.pr.User.Login,
 		strings.Join(reviewers.UnsortedList(), ", @"),
 		strings.Join(signers.UnsortedList(), ", @"),
 	)

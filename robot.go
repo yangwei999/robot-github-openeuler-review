@@ -29,6 +29,7 @@ type iClient interface {
 	GetUserPermissionOfRepo(org, repo, user string) (*sdk.RepositoryPermissionLevel, error)
 	GetDirectoryTree(org, repo, branch string, recursive bool) ([]*sdk.TreeEntry, error)
 	GetSinglePR(org, repo string, number int) (*sdk.PullRequest, error)
+	GetPullRequests(pr gc.PRInfo) ([]*sdk.PullRequest, error)
 }
 
 func newRobot(cli iClient, cacheCli *cache.SDK) *robot {
@@ -107,6 +108,30 @@ func (bot *robot) handleCommentEvent(e *sdk.IssueCommentEvent, pc config.Config,
 	}
 
 	if err = bot.handleCheckPR(e, cfg, log); err != nil {
+		merr.AddError(err)
+	}
+
+	if err = bot.removeInvalidCLA(e, cfg, log); err != nil {
+		merr.AddError(err)
+	}
+
+	if err = bot.handleRebase(e, cfg, log); err != nil {
+		merr.AddError(err)
+	}
+
+	if err = bot.handleFlattened(e, cfg, log); err != nil {
+		merr.AddError(err)
+	}
+
+	if err = bot.removeRebase(e, cfg, log); err != nil {
+		merr.AddError(err)
+	}
+
+	if err = bot.removeFlattened(e, cfg, log); err != nil {
+		merr.AddError(err)
+	}
+
+	if err = bot.handleACK(e, cfg, log); err != nil {
 		merr.AddError(err)
 	}
 
