@@ -2,15 +2,15 @@ package main
 
 import (
 	"flag"
-	"github.com/opensourceways/community-robot-lib/githubclient"
 	"net/url"
 	"os"
 
-	"github.com/opensourceways/community-robot-lib/logrusutil"
-	liboptions "github.com/opensourceways/community-robot-lib/options"
-	framework "github.com/opensourceways/community-robot-lib/robot-github-framework"
-	"github.com/opensourceways/community-robot-lib/secret"
 	cache "github.com/opensourceways/repo-file-cache/sdk"
+	"github.com/opensourceways/robot-github-lib/client"
+	"github.com/opensourceways/robot-github-lib/framework"
+	"github.com/opensourceways/server-common-lib/logrusutil"
+	liboptions "github.com/opensourceways/server-common-lib/options"
+	"github.com/opensourceways/server-common-lib/secret"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,7 +61,7 @@ func main() {
 
 	defer secretAgent.Stop()
 
-	c := githubclient.NewClient(secretAgent.GetTokenGenerator(o.github.TokenPath))
+	c := client.NewClient(secretAgent.GetTokenGenerator(o.github.TokenPath))
 	s := cache.NewSDK(o.cacheEndpoint, o.maxRetries)
 
 	p := newRobot(c, s)

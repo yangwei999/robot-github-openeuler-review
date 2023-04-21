@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	gc "github.com/opensourceways/community-robot-lib/githubclient"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	sdk "github.com/google/go-github/v36/github"
+	gc "github.com/opensourceways/robot-github-lib/client"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
