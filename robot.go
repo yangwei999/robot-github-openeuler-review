@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	sdk "github.com/google/go-github/v36/github"
-	"github.com/opensourceways/community-robot-lib/config"
-	gc "github.com/opensourceways/community-robot-lib/githubclient"
-	framework "github.com/opensourceways/community-robot-lib/robot-github-framework"
-	"github.com/opensourceways/community-robot-lib/utils"
 	cache "github.com/opensourceways/repo-file-cache/sdk"
+	gc "github.com/opensourceways/robot-github-lib/client"
+	framework "github.com/opensourceways/robot-github-lib/framework"
+	"github.com/opensourceways/server-common-lib/config"
+	"github.com/opensourceways/server-common-lib/utils"
 	"github.com/sirupsen/logrus"
 )
 

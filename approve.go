@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	gc "github.com/opensourceways/community-robot-lib/githubclient"
 	"regexp"
+
+	gc "github.com/opensourceways/robot-github-lib/client"
 
 	sdk "github.com/google/go-github/v36/github"
 	"github.com/sirupsen/logrus"
