@@ -21,7 +21,7 @@ const (
 	msgInvalidLabels      = "PR should remove these labels: %s"
 	msgNotEnoughLGTMLabel = "PR needs %d lgtm labels and now gets %d"
 	msgFrozenWithOwner    = "The target branch of PR has been frozen and it can be merge only by branch owners: %s"
-	legalLabelsAddedBy    = "openeuler-ci-bot"
+	legalLabelsAddedBy    = "openEuler-bot"
 )
 
 var regCheckPr = regexp.MustCompile(`(?mi)^/check-pr\s*$`)
